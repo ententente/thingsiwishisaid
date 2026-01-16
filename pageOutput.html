@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Get Your Image</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page3">
+    <div class="main-panel" style="display:flex; align-items:center; justify-content:center; position:absolute;">
+      <canvas id="mainCanvas" style="position:absolute; inset:0; width:100%; height:100%;"></canvas>
+    </div>
+
+    <div class="bottom-content" style="display:flex; align-items:center; gap:24px;">
+      <button id="downloadBtn" class="continue-button" style="position:static;">get your image</button>
+    </div>
+  </div>
+
+  <div id="diag" class="diag"></div>
+
+  <script>
+    (function(){
+      const DW = 1400, DH = 980;
+      const canvas = document.getElementById('mainCanvas');
+      const ctx = canvas.getContext('2d');
+      const diagEl = document.getElementById('diag');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const counterEl = document.querySelector('.counter-box');
+
+      const diag = (msg) => { if (diagEl) diagEl.textContent = msg; };
+      const setCounter = (v) => { if (counterEl) counterEl.textContent = v; };
+
+      canvas.width = DW;
+      canvas.height = DH;
+      ctx.clearRect(0,0,DW,DH); // transparent background
+
+      function loadStoredImage() {
+        const keys = ['distortionStep3','distortionStep2','distortionStep1'];
+        for (const k of keys) {
+          const url = localStorage.getItem(k);
+          if (url) {
+            return new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => resolve(img);
+              img.onerror = () => resolve(null);
+              img.src = url;
+            });
+          }
+        }
+        return Promise.resolve(null);
+      }
+
+      function drawImageFit(img) {
+        ctx.clearRect(0,0,DW,DH);
+        if (!img) return;
+        // cover-ish fit while preserving aspect
+        const arCanvas = DW / DH;
+        const arImg = img.width / img.height;
+        let w, h, x, y;
+        if (arImg > arCanvas) {
+          h = DH;
+          w = h * arImg;
+          x = (DW - w) / 2;
+          y = 0;
+        } else {
+          w = DW;
+          h = w / arImg;
+          x = 0;
+          y = (DH - h) / 2;
+        }
+        ctx.drawImage(img, x, y, w, h);
+      }
+
+      function nextFilename() {
+        const key = 'iwishisaidCounter';
+        let n = parseInt(localStorage.getItem(key) || '1', 10);
+        const name = `iwishisaid${String(n).padStart(3,'0')}.png`;
+        localStorage.setItem(key, (n+1).toString());
+        setCounter(String(n).padStart(3,'0'));
+        return name;
+      }
+
+      function download() {
+        const url = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nextFilename();
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+
+      loadStoredImage().then(img => {
+        if (!img) {
+          diag('No saved render found.');
+          setCounter('---');
+          return;
+        }
+        drawImageFit(img);
+        diag('Image loaded. Click "get your image" to download.');
+      });
+
+      downloadBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        download();
+      });
+    })();
+  </script>
+</body>
+</html>

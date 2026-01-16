@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" data-step="0">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Input</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page3">
+    <div class="main-panel">
+      <!-- simple centered inputs -->
+      <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:20px;">
+        <input id="line1" type="text" placeholder="- first line -" style="width:280px; padding:10px; font-family:'Press Start 2P', monospace; border:1px solid #fff; background:#000; color:#fff;" />
+        <input id="line2" type="text" placeholder="- second line -" style="width:280px; padding:10px; font-family:'Press Start 2P', monospace; border:1px solid #fff; background:#000; color:#fff;" />
+        <input id="line3" type="text" placeholder="- third line -" style="width:280px; padding:10px; font-family:'Press Start 2P', monospace; border:1px solid #fff; background:#000; color:#fff;" />
+        <button id="saveInput" style="margin-top:12px; padding:12px 18px; font-family:'Press Start 2P', monospace; border:2px solid #fff; background:#000; color:#fff; cursor:pointer;">
+          save & continue
+        </button>
+      </div>
+    </div>
+    <div class="bottom-content" style="text-align:center;">
+      <div class="overthinking-text" style="font-size:32px;">READY?</div>
+    </div>
+  </div>
+  <script>
+    const btn = document.getElementById('saveInput');
+    btn?.addEventListener('click', () => {
+      const lines = [
+        document.getElementById('line1').value,
+        document.getElementById('line2').value,
+        document.getElementById('line3').value,
+      ];
+      localStorage.setItem('inputLines', JSON.stringify(lines));
+      window.location.href = 'page1.html';
+    });
+  </script>
+</body>
+</html>

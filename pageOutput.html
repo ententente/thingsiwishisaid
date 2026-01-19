@@ -26,17 +26,15 @@
       const ctx = canvas.getContext('2d');
       const diagEl = document.getElementById('diag');
       const downloadBtn = document.getElementById('downloadBtn');
-      const counterEl = document.querySelector('.counter-box');
 
       const diag = (msg) => { if (diagEl) diagEl.textContent = msg; };
-      const setCounter = (v) => { if (counterEl) counterEl.textContent = v; };
 
       canvas.width = DW;
       canvas.height = DH;
-      ctx.clearRect(0,0,DW,DH); // transparent background
+      ctx.clearRect(0,0,DW,DH);
 
       function loadStoredImage() {
-        const keys = ['distortionStep3','distortionStep2','distortionStep1'];
+        const keys = ['distortionStep4','distortionStep3','distortionStep2','distortionStep1'];
         for (const k of keys) {
           const url = localStorage.getItem(k);
           if (url) {
@@ -54,21 +52,11 @@
       function drawImageFit(img) {
         ctx.clearRect(0,0,DW,DH);
         if (!img) return;
-        // cover-ish fit while preserving aspect
         const arCanvas = DW / DH;
         const arImg = img.width / img.height;
         let w, h, x, y;
-        if (arImg > arCanvas) {
-          h = DH;
-          w = h * arImg;
-          x = (DW - w) / 2;
-          y = 0;
-        } else {
-          w = DW;
-          h = w / arImg;
-          x = 0;
-          y = (DH - h) / 2;
-        }
+        if (arImg > arCanvas) { h = DH; w = h * arImg; x = (DW - w) / 2; y = 0; }
+        else { w = DW; h = w / arImg; x = 0; y = (DH - h) / 2; }
         ctx.drawImage(img, x, y, w, h);
       }
 
@@ -77,7 +65,6 @@
         let n = parseInt(localStorage.getItem(key) || '1', 10);
         const name = `iwishisaid${String(n).padStart(3,'0')}.png`;
         localStorage.setItem(key, (n+1).toString());
-        setCounter(String(n).padStart(3,'0'));
         return name;
       }
 
@@ -94,7 +81,6 @@
       loadStoredImage().then(img => {
         if (!img) {
           diag('No saved render found.');
-          setCounter('---');
           return;
         }
         drawImageFit(img);

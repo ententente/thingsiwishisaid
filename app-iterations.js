@@ -1,9 +1,9 @@
 (() => {
   console.log('app-iterations.js (base white, rings on scroll) loaded');
 
-  const STEP = 3;
-  const PREV_KEY = `distortionStep${STEP - 1}`; // distortionStep2
-  const CURR_KEY = `distortionStep${STEP}`;
+  const STEP = 4;
+  const PREV_KEY = `distortionStep${STEP - 1}`; // distortionStep3
+  const CURR_KEY = `distortionStep${STEP}`;     // distortionStep4
 
   const DW = 1400, DH = 980;
   const PW_FAST = 450, PH_FAST = 315;

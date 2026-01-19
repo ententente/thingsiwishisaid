@@ -1,7 +1,7 @@
 (() => {
-  const STEP = Number(document.body.dataset.step || '2');
-  const PREV_KEY = STEP > 1 ? `distortionStep${STEP - 1}` : null;
-  const CURR_KEY = `distortionStep${STEP}`;
+  const STEP = Number(document.body.dataset.step || '3');
+  const PREV_KEY = `distortionStep${STEP - 1}`; // distortionStep2
+  const CURR_KEY = `distortionStep${STEP}`;     // distortionStep3
   const DW = 1400, DH = 980;
   const PW = 400, PH = 280;
 

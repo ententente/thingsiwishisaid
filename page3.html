@@ -9,35 +9,54 @@
 <body data-step="3">
   <div class="page3">
     <div class="main-panel">
-      <div class="left-menu">
-        <div class="counter-box">100</div>
-      </div>
+      <div class="counter-box">100</div>
       <canvas id="mainCanvas" style="position:absolute; inset:0; width:100%; height:100%;"></canvas>
     </div>
 
-  <div class="stars-container-pages">
-    <img src="IMG/STARS.png" alt="shapes" />
-   </div>
+    <div class="canvas-hint" id="canvasHint">OVERTHINKING IT,<br>ARE YOU?</div>
 
-  <div class="bottom-content">
-  <div class="headline-block">
-    <span class="headline-line">OVERTHINKING IT,</span>
-    <span class="headline-line">ARE YOU?</span>
-  </div>
-  <div class="button-stack">
-    <a id="next" class="cta-next" href="pageOutput.html">want to continue? ›</a>
-    <button class="cta-flip">‹ flip it, will you?</button>
-  </div>
-</div>
+    <div class="stars-container-pages">
+      <img src="IMG/STARS.png" alt="shapes" />
+    </div>
 
-<!-- New mini action buttons (images sized to counter height) -->
-<div class="mini-actions">
-    <img id="reset-btn" src="IMG/RESET.png" alt="Reset">
-    <img id="startover-btn" src="IMG/STARTOVER.png" alt="Start Over">
-</div>
+    <div class="bottom-bar">
+      <div class="mini-col">
+        <button id="reset-btn" class="mini-btn">RESET</button>
+        <button id="startover-btn" class="mini-btn">START<br>OVER</button>
+      </div>
+
+      <div class="prompt-col">
+        <div class="prompt-line prompt-line-1"></div>
+        <div class="prompt-line prompt-line-2"></div>
+      </div>
+
+      <div class="cta-col">
+        <a id="next" class="cta-btn" href="pageOutput.html">want to continue? ›</a>
+        <button id="flip-btn" class="cta-btn">‹ flip it, will you?</button>
+      </div>
+    </div>
+  </div>
 
   <div id="diag" class="diag"></div>
   <script src="app-iterations.js"></script>
   <script src="flip-toggle.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const canvas = document.getElementById('mainCanvas');
+      const hint = document.getElementById('canvasHint');
+      if (!canvas || !hint) return;
+
+      const show = () => { hint.style.display = 'block'; };
+      const hide = () => { hint.style.display = 'none'; };
+      const move = (e) => {
+        hint.style.left = `${e.clientX}px`;
+        hint.style.top  = `${e.clientY}px`;
+      };
+
+      canvas.addEventListener('mouseenter', show);
+      canvas.addEventListener('mouseleave', hide);
+      canvas.addEventListener('mousemove', move);
+    });
+  </script>
 </body>
 </html>

@@ -8,12 +8,11 @@
 </head>
 <body>
   <div class="page3">
-    <div class="main-panel" style="display:flex; align-items:center; justify-content:center; position:absolute;">
-      <canvas id="mainCanvas" style="position:absolute; inset:0; width:100%; height:100%;"></canvas>
+    <div class="main-panel main-panel-output">
+      <canvas id="mainCanvas"></canvas>
     </div>
-
-    <div class="bottom-content" style="display:flex; align-items:center; gap:24px;">
-      <button id="downloadBtn" class="continue-button" style="position:static;">get your image</button>
+    <div>
+      <button id="downloadBtn" class="continue-button">keep your message</button>
     </div>
   </div>
 
@@ -31,7 +30,6 @@
 
       canvas.width = DW;
       canvas.height = DH;
-      ctx.clearRect(0,0,DW,DH);
 
       function loadStoredImage() {
         const keys = ['distortionStep4','distortionStep3','distortionStep2','distortionStep1'];
@@ -79,17 +77,15 @@
       }
 
       loadStoredImage().then(img => {
-        if (!img) {
-          diag('No saved render found.');
-          return;
-        }
+        if (!img) { diag('No saved render found.'); return; }
         drawImageFit(img);
-        diag('Image loaded. Click "get your image" to download.');
+        diag('Image loaded. Click "keep your message" to download.');
       });
 
       downloadBtn.addEventListener('click', (e) => {
         e.preventDefault();
         download();
+        setTimeout(() => { window.location.href = 'comment2.html'; }, 120);
       });
     })();
   </script>

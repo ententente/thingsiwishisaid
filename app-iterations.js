@@ -9,13 +9,19 @@
   const PW_FAST = 450, PH_FAST = 315;
   const PW_HQ   = 900, PH_HQ   = 630;
 
+  // Fixed render scale for consistent placement (tweak 0.82–0.90 if needed)
+  const CONTENT_SCALE = 0.85;
+
   const canvas = document.getElementById('mainCanvas');
   const ctx = canvas.getContext('2d');
   const nextLink = document.getElementById('next');
   const diagEl = document.getElementById('diag');
-  const counterEl = document.querySelector('.counter-box'); // counter
+  const counterEl = document.querySelector('.counter-box');
+  const resetBtn = document.getElementById('reset-btn');
+  const startOverBtn = document.getElementById('startover-btn');
 
-  let outlineLevel = 50;
+  // Start at 0; range stays 0..100
+  let outlineLevel = 0;
   let idleTimer = null;
   let rafPending = false;
   let hasRenderedOnce = false;
@@ -167,20 +173,17 @@
     quantizeBinary(out);
     targetCtx.putImageData(new ImageData(out,w,h),0,0);
 
-    const b=bbox(baseMask,w,h);
+    // Fixed scale/placement based on full proc canvas (not bbox)
     ctx.save();
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,DW,DH);
     ctx.imageSmoothingEnabled=false;
-    if(b){
-      const pad=12;
-      const scale=Math.min((DW-2*pad)/b.w,(DH-2*pad)/b.h);
-      const cx=(b.minX+b.maxX)/2;
-      const cy=(b.minY+b.maxY)/2;
-      const offsetX=DW/2 - cx*scale;
-      const offsetY=DH/2 - cy*scale;
-      ctx.setTransform(scale,0,0,scale,offsetX,offsetY);
-    }
+    const pad=12;
+    const baseScale=Math.min((DW-2*pad)/w,(DH-2*pad)/h);
+    const scale=baseScale*CONTENT_SCALE;
+    const offsetX=DW/2 - (w/2)*scale;
+    const offsetY=DH/2 - (h/2)*scale;
+    ctx.setTransform(scale,0,0,scale,offsetX,offsetY);
     ctx.drawImage(targetCanvas,0,0);
     ctx.restore();
   }
@@ -211,25 +214,22 @@
 
   function drawBaseOnly(mask){
     setCounter(outlineLevel);
-    const b=bbox(mask,procFast.w,procFast.h);
     const out=new Uint8ClampedArray(procFast.w*procFast.h*4);
     paintMaskToRGBA(mask,procFast.w,procFast.h,out,[255,255,255]);
     quantizeBinary(out);
     procFast.g.putImageData(new ImageData(out,procFast.w,procFast.h),0,0);
 
+    // Fixed scale/placement based on full proc canvas (not bbox)
     ctx.save();
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,DW,DH);
     ctx.imageSmoothingEnabled=false;
-    if(b){
-      const pad=12;
-      const scale=Math.min((DW-2*pad)/b.w,(DH-2*pad)/b.h);
-      const cx=(b.minX+b.maxX)/2;
-      const cy=(b.minY+b.maxY)/2;
-      const offsetX=DW/2 - cx*scale;
-      const offsetY=DH/2 - cy*scale;
-      ctx.setTransform(scale,0,0,scale,offsetX,offsetY);
-    }
+    const pad=12;
+    const baseScale=Math.min((DW-2*pad)/procFast.w,(DH-2*pad)/procFast.h);
+    const scale=baseScale*CONTENT_SCALE;
+    const offsetX=DW/2 - (procFast.w/2)*scale;
+    const offsetY=DH/2 - (procFast.h/2)*scale;
+    ctx.setTransform(scale,0,0,scale,offsetX,offsetY);
     ctx.drawImage(procFast.c,0,0);
     ctx.restore();
   }
@@ -274,6 +274,12 @@
     return m;
   }
 
+  function resetState() {
+    outlineLevel = 0;
+    setCounter(0);
+    if (lastMaskFast) drawBaseOnly(lastMaskFast);
+  }
+
   function init(){
     canvas.width=DW; canvas.height=DH;
     canvas.addEventListener('wheel', onWheelCanvas, {passive:false});
@@ -309,6 +315,19 @@
         if(target) window.location.href = target;
       });
     }
+    if (resetBtn) {
+      resetBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        resetState();
+      });
+    }
+    if (startOverBtn) {
+      startOverBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'comment1.html';
+      });
+    }
   }
   init();
 })();
+

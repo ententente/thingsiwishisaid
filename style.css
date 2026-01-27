@@ -1,7 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 /* Host IBM Plex Mono locally */
-
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('fonts/IBMPlexMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
 @font-face {
   font-family: 'IBM Plex Mono';
   src: url('fonts/IBMPlexMono-Bold.ttf') format('truetype');
@@ -9,9 +14,7 @@
   font-style: normal;
 }
 
-/* -----------------
-   GLOBAL RESET & BASE
------------------- */
+/* -------- GLOBAL -------- */
 * { box-sizing: border-box; }
 
 html, body {
@@ -28,18 +31,16 @@ html, body {
 
 a { text-decoration: none; color: inherit; }
 
-/* -----------------
-   VARIABLES
------------------- */
+/* -------- VARIABLES -------- */
 :root {
   --panel-top: 56px;
   --panel-width: 92%;
   --panel-height: 68vh;
+   --grainy-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.18'/%3E%3C/svg%3E");
 }
 
-/* -----------------
-   INDEX (READY PAGE)
------------------- */
+
+/* -------- INDEX (READY PAGE) -------- */
 .index-page { position: relative; width: 100%; height: 100%; }
 
 .index-top-text {
@@ -114,9 +115,7 @@ a { text-decoration: none; color: inherit; }
   transform: translateX(-50%);
 }
 
-/* -----------------
-   SHARED PAGE LAYOUT
------------------- */
+/* -------- SHARED PAGE LAYOUT -------- */
 .page3 { position: relative; width: 100%; height: 100%; }
 
 /* Main panel */
@@ -143,8 +142,6 @@ a { text-decoration: none; color: inherit; }
   background-repeat: no-repeat;
   background-size: 100% 100%;
 }
-
-/* Canvas fills panel */
 .main-panel canvas {
   position: absolute;
   inset: 0;
@@ -152,7 +149,7 @@ a { text-decoration: none; color: inherit; }
   height: 100%;
 }
 
-/* Counter: always visible on any page that has it */
+/* Counter (unchanged) */
 .counter-box {
   position: absolute;
   bottom: 18px;
@@ -165,102 +162,34 @@ a { text-decoration: none; color: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 11;
+  z-index: 200;
 }
 
-/* -----------------
-   BOTTOM BAND / CTA
------------------- */
-.bottom-content {
+/* Optional: right-side stars */
+.right-stars {
   position: absolute;
-  left: 4vw;
-  top: calc(var(--panel-top) + var(--panel-height) + 32px);
-  display: block;
-  pointer-events: none;
-  z-index: 4;
-}
-.bottom-content > * { pointer-events: auto; }
-
-/* Headline two lines */
-.header-text{
-  display: block;
-  margin: 0;
-  font-size: 10px;
-  line-height: 80;
-  white-space: nowrap;
-}
-
-.headline-line1 { margin-bottom: 6px; }
-
-/* Button row: swap and space like the reference */
-.button-row {
+  top: 32px;
+  right: 32px;
   display: flex;
+  flex-direction: column;
+  gap: 28px;
   align-items: center;
-  justify-content: space-between;
-  gap: 30vw;          /* increase if you want an even larger gap */
-  width: 100%;
+  z-index: 3;
+}
+.right-stars img {
+  width: 42px;
+  height: auto;
+  image-rendering: pixelated;
 }
 
-/* Keep both buttons narrower so the gap shows */
-.continue-button,
-.flip-button {
-  flex: 0 0 32vw;     /* reduce each button’s width; adjust if needed */
-  max-width: 32vw;
-  height: 48px;
-  padding: 0 16px;
-  margin: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  background-color: white;
-  color: #000;
-}
-/* -----------------
-   RIGHT-SIDE ACTIONS
------------------- */
-.side-actions {
-  position: absolute;
-  top: calc(var(--panel-top) + var(--panel-height) + 80px - 6px);
-  right: 3vw;
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
-  z-index: 5;
-  background: transparent;
-}
-
-/* Transparent buttons using your layer PNGs */
-.side-actions .action-btn {
-  width: 160px;
-  height: 140px;
-  background: transparent;
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: center;
-  color: #fff;
-  font-family: 'IMB Plex Mono';
-  font-size: 20px;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-top: 3px;
-}
-.side-actions .btn-reset     { background-image: url("IMG/Layer1.png"); }
-.side-actions .btn-startover { background-image: url("IMG/Layer2.png"); }
-.side-actions .btn-about     { background-image: url("IMG/Layer3.png"); }
-
-/* -----------------
-   OVERLAY
------------------- */
+/* Overlay image */
 .overlay {
   position: absolute;
   rotate: 180deg;
   width: 100vw;
   height: auto;
-  z-index: 1;
   pointer-events: none;
+  mix-blend-mode: difference;
 }
 
 /* Full-page overlay behind interactive items */
@@ -271,11 +200,132 @@ body::after {
   background: url("IMG/OVERLAY.png") center center / cover no-repeat;
   opacity: 1;
   pointer-events: none;
-  z-index: 20;
+
+  z-index: 2;
 }
 
-.bottom-content .h1,
-.bottom-content .h2 {
-  font-size: 90px !important; /* set your desired size */
-  line-height: 1.0;
+/* -------- NEW BOTTOM LAYOUT -------- */
+/* Container: text left, CTAs right */
+.bottom-content {
+  position: absolute;
+  left: 4vw;
+  top: calc(var(--panel-top) + var(--panel-height) + 24px);
+  width: 92%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 0;
+  pointer-events: none;
+  z-index: 4;
+  font-family: "IBM Plex", monospace;
+  font-weight: 1000;
+  pointer-events: auto !important;
+  z-index: 20;
+}
+.bottom-content > * { pointer-events: auto; 
+}
+
+/* Two headline lines */
+.headline-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.headline-block .headline-line {
+  margin: 0;
+  font-size: 64px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Side CTA stack: same height as text lines */
+.button-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+  z-index: 200;
+}
+.cta-next,
+.cta-flip {
+  height: 64px;
+  padding: 18px;
+  font-size: 24px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: right;
+  background: #fff;
+  color: #000;
+  border: none;
+  font-family: 'Press Start 2P', monospace;
+  white-space: nowrap;
+}
+.cta-next { order: 1; }  /* want to continue? */
+.cta-flip { order: 2; }  /* flip it */
+
+/* Hide old right-side actions */
+.side-actions { display: none !important; }
+
+/* New mini actions: same height as counter (48px) */
+.mini-actions {
+  position: absolute;
+  top: calc(var(--panel-top) + var(--panel-height) - 65px);
+  left: 13vw;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  z-index: 6;
+}
+.mini-actions img {
+  height: 48px;   /* matches counter height */
+  width: auto;
+  display: block;
+}
+
+.stars-container-pages {
+  position: absolute;
+  top: -80px;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  rotate: 0deg;
+  z-index: 10;
+  filter: invert(0);
+  mix-blend-mode: screen;
+}
+
+.stars-container-pages img {
+  width: min(100vw);
+  height: auto;
+  display: block;
+  pointer-events: none;
+}
+
+.button-stack,
+.cta-next,
+.cta-flip {
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: var(--grainy-noise);
+  background-repeat: repeat;
+  background-size: 160px 160px; /* smaller = finer, larger = coarser */
+  mix-blend-mode: multiply;      /* try overlay/soft-light for variation */
+  opacity: 1;                    /* overall strength */
+}
+
+/* Invert everything when toggled */
+:root.is-inverted {
+  filter: invert(1) hue-rotate(180deg);
 }

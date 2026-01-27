@@ -6,15 +6,17 @@
   const ctx = canvas.getContext('2d');
   const nextLink = document.getElementById('next');
   const diagEl = document.getElementById('diag');
-  const counterEl = document.querySelector('.counter-box'); // NEW
+  const counterEl = document.querySelector('.counter-box');
+  const resetBtn = document.getElementById('reset-btn');
+  const startOverBtn = document.getElementById('startover-btn');
+
   let warpLevel = 0;
   let lines = ['say something, will you?'];
 
   const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
   const lerp=(a,b,t)=>a+(b-a)*t;
   const diag=(...m)=>{ if(diagEl) diagEl.textContent=m.join(' '); };
-
-  function setCounter(v){ if(counterEl) counterEl.textContent = Math.round(v); } // NEW
+  const setCounter = v => { if(counterEl) counterEl.textContent = Math.round(v); };
 
   function loadLines(){
     try {
@@ -38,7 +40,7 @@
     canvas.width=DW; canvas.height=DH;
     ctx.clearRect(0,0,DW,DH);
     ctx.fillStyle='#fff';
-    setCounter(warpLevel); // NEW
+    setCounter(warpLevel);
 
     const t = warpLevel/100;
     const cx=DW/2, cy=DH/2;
@@ -118,6 +120,11 @@
     } catch(e){diag('Save failed');}
   }
 
+  function resetState(){
+    warpLevel = 0;
+    drawWarp();
+  }
+
   function onWheel(e){
     e.preventDefault();
     warpLevel=clamp(warpLevel+e.deltaY*0.05,0,100);
@@ -130,6 +137,7 @@
     loadLines();
     ctx.fillStyle='#fff';
     drawWarp();
+
     if(nextLink){
       nextLink.addEventListener('click', (e)=>{
         e.preventDefault();
@@ -138,6 +146,19 @@
         window.location.href = target;
       });
     }
+    if (resetBtn) {
+      resetBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        resetState();
+      });
+    }
+    if (startOverBtn) {
+      startOverBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'comment1.html';
+      });
+    }
+
     diag('Warp ready. Scroll to warp.');
   }
   init();

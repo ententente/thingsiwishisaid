@@ -15,25 +15,31 @@
     <canvas id="mainCanvas" style="position:absolute; inset:0; width:100%; height:100%;"></canvas>
 
   </div>
-    <div class="bottom-content">
-      <div>
-        <h1>GOING IN CIRCLES,</h1>
-        <h2>ARE YOU?</h2>
-      </div>
 
-      <div class="flip-button">&lt; flip it, will you?</div>
-      <a id="next" class="continue-button" href="pageSpacing.html">want to continue? &gt;</a>
-      
+  <div class="stars-container-pages">
+      <img src="IMG/STARS.png" alt="shapes" />
     </div>
+
+  <div class="bottom-content">
+  <div class="headline-block">
+    <span class="headline-line">GOING IN CIRCLES,</span>
+    <span class="headline-line">ARE YOU?</span>
+  </div>
+  <div class="button-stack">
+    <a id="next" class="cta-next" href="pageSpacing.html">want to continue? ›</a>
+    <button id="flip-btn" class="cta-flip">‹ flip it, willyou?</button>
+  </div>
+</div>
+
+<!-- New mini action buttons (images sized to counter height) -->
+  <div class="mini-actions">
+    <img id="reset-btn" src="IMG/RESET.png" alt="Reset">
+    <img id="startover-btn" src="IMG/STARTOVER.png" alt="Start Over">
   </div>
 
-  <div class="side-actions">
-    <button class="action-btn btn-reset">RESET</button>
-    <button class="action-btn btn-startover">START OVER</button>
-    <button class="action-btn btn-about">ABOUT</button>
-  </div>
 
-  <div id="diag" class="diag"></div>
   <script src="app-warp.js"></script>
+  
+  <script src="flip-toggle.js" defer></script>
 </body>
 </html>

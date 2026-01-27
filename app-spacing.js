@@ -1,19 +1,22 @@
 (() => {
   const STEP = 2;
-  const PREV_KEY = `distortionStep${STEP - 1}`; // distortionStep1
-  const CURR_KEY = `distortionStep${STEP}`;     // distortionStep2
+  const PREV_KEY = `distortionStep${STEP - 1}`;
+  const CURR_KEY = `distortionStep${STEP}`;
   const DW = 1400, DH = 980;
-  const PAD = 200; // big padding to avoid clipping while packing
+  const PAD = 200;
 
   const canvas = document.getElementById('mainCanvas');
   const ctx = canvas.getContext('2d');
   const nextLink = document.getElementById('next');
   const diagEl = document.getElementById('diag');
   const counterEl = document.querySelector('.counter-box');
+  const resetBtn = document.getElementById('reset-btn');
+  const startOverBtn = document.getElementById('startover-btn');
 
-  let spacingLevel = 0; // 0..100
-  let prevImg = null;
-  let fallbackLines = ['Ako'];
+  let spacingLevel = 0; // 0 = widest, 100 = very tight/overlapping
+  let components = [];
+  let origCx = DW / 2;
+  let hasSource = false;
 
   const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
   const diag = (...m)=>{ if(diagEl) diagEl.textContent=m.join(' '); };
@@ -39,31 +42,51 @@
     return ['Ako'];
   }
 
-  function bboxFromData(imgData, w, h) {
-    const d = imgData.data;
-    let minX=w, minY=h, maxX=-1, maxY=-1;
-    for (let y=0; y<h; y++) {
-      for (let x=0; x<w; x++) {
-        const a = d[(y*w+x)*4+3];
-        if (a>16) {
-          if (x<minX) minX=x;
-          if (y<minY) minY=y;
-          if (x>maxX) maxX=x;
-          if (y>maxY) maxY=y;
+  function buildSourceAndComponents(img, fallbackLines) {
+    const src = document.createElement('canvas');
+    src.width = DW; src.height = DH;
+    const g = src.getContext('2d');
+    g.clearRect(0,0,DW,DH);
+    if (img) {
+      g.drawImage(img, 0, 0, DW, DH);
+    } else {
+      const margin = DW * 0.08;
+      const availableH = DH - margin*2;
+      const lines = fallbackLines;
+      let fontSize = Math.floor(availableH / (lines.length * 1.6));
+      fontSize = Math.max(12, Math.min(fontSize, 180));
+      const lsEm = 1;
+      g.font = `900 ${fontSize}px "Press Start 2P", monospace`;
+      g.textBaseline = 'middle';
+      g.textAlign = 'center';
+      g.fillStyle = '#fff';
+      const lh = fontSize * 1.2;
+      const blockH = (lines.length - 1) * lh;
+      let y = DH/2 - blockH/2;
+      for (const line of lines) {
+        let width = 0;
+        for (const ch of line) width += g.measureText(ch).width + fontSize * lsEm;
+        width = Math.max(0, width - fontSize * lsEm);
+        let cursor = DW/2 - width/2;
+        for (const ch of line) {
+          g.fillText(ch, cursor, y);
+          cursor += g.measureText(ch).width + fontSize * lsEm;
         }
+        y += lh;
       }
     }
-    if (maxX<minX || maxY<minY) return null;
-    return {minX,minY,maxX,maxY};
+    extractComponents(src);
   }
 
-  // Find components on alpha>16
-  function findComponents(imgData, w, h) {
-    const d = imgData.data;
+  function extractComponents(srcCanvas) {
+    const w = srcCanvas.width, h = srcCanvas.height;
+    const g = srcCanvas.getContext('2d');
+    const data = g.getImageData(0,0,w,h);
+    const d = data.data;
     const visited = new Uint8Array(w*h);
-    const comps = [];
     const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
     const inb = (x,y)=> x>=0 && x<w && y>=0 && y<h;
+    const comps = [];
 
     for (let y=0;y<h;y++){
       for (let x=0;x<w;x++){
@@ -71,8 +94,8 @@
         if (visited[idx]) continue;
         if (d[idx*4+3] <= 16) { visited[idx]=1; continue; }
         const q=[idx]; visited[idx]=1;
-        const pixels=[];
         let minX=w,minY=h,maxX=0,maxY=0;
+        const pixels = [];
         while(q.length){
           const cur=q.pop();
           const cy=Math.floor(cur/w), cx=cur - cy*w;
@@ -88,135 +111,85 @@
             else visited[nidx]=1;
           }
         }
-        comps.push({pixels,minX,maxX,minY,maxY});
+        const cw = maxX - minX + 1;
+        const ch = maxY - minY + 1;
+        const compCanvas = document.createElement('canvas');
+        compCanvas.width = cw; compCanvas.height = ch;
+        const cg = compCanvas.getContext('2d');
+        const compData = cg.createImageData(cw, ch);
+        for (const p of pixels) {
+          const py = (p / w) | 0;
+          const px = p - py*w;
+          const cx0 = px - minX;
+          const cy0 = py - minY;
+          const srcIdx = p*4;
+          const dstIdx = (cy0*cw + cx0)*4;
+          compData.data[dstIdx  ] = d[srcIdx  ];
+          compData.data[dstIdx+1] = d[srcIdx+1];
+          compData.data[dstIdx+2] = d[srcIdx+2];
+          compData.data[dstIdx+3] = d[srcIdx+3];
+        }
+        cg.putImageData(compData, 0, 0);
+        const cxCenter = (minX + maxX) / 2;
+        comps.push({ canvas: compCanvas, minX, maxX, minY, maxY, w: cw, h: ch, cx: cxCenter });
       }
     }
-    return comps;
+
+    comps.sort((a,b)=> a.cx - b.cx);
+    components = comps;
+    if (comps.length) {
+      const bbMin = comps[0].minX;
+      const bbMax = comps[comps.length-1].maxX;
+      origCx = (bbMin + bbMax) / 2;
+    } else {
+      origCx = DW/2;
+    }
+    hasSource = true;
   }
 
-  // Compress gaps horizontally, allow overlap, preserve center
-  function compress(imgData, w, h, level, origCx) {
-    const comps = findComponents(imgData, w, h);
-    if (!comps.length) return imgData;
-
-    comps.sort((a,b)=> (a.minX+a.maxX)/2 - (b.minX+b.maxX)/2);
-
-    const gapFactor = 1 - 0.9*(level/100); // 1→0.1
-    const minGap = -30; // allow overlap
-    const newStarts = [];
-    let cursor = comps[0].minX;
-    newStarts[0] = cursor;
-    for (let i=1;i<comps.length;i++){
-      const prev=comps[i-1], cur=comps[i];
+  // More aggressive compression: allow heavy negative gaps based on level
+  function computePositions(level) {
+    if (!components.length) return [];
+    // gapFactor goes from 1 (level 0) down to -2 (level 100), so gaps become strongly negative
+    const gapFactor = 1 - 3.0 * (level / 100); // 1 -> -2
+    const minGap = -400; // hard cap on overlap distance
+    const starts = [];
+    let cursor = components[0].minX;
+    starts[0] = cursor;
+    for (let i=1;i<components.length;i++){
+      const prev = components[i-1], cur = components[i];
       const gap = cur.minX - prev.maxX - 1;
-      const desired = Math.max(minGap, Math.floor(gap*gapFactor));
-      cursor = (newStarts[i-1] + (prev.maxX - prev.minX)) + desired + 1;
-      newStarts[i] = cursor;
+      // add an extra negative push proportional to level to force overlap
+      const desired = Math.max(minGap, Math.round(gap * gapFactor - level * 1.2));
+      cursor = (starts[i-1] + (prev.maxX - prev.minX)) + desired + 1;
+      starts[i] = cursor;
     }
 
-    const out = new Uint8ClampedArray(w*h*4);
-    for (let i=0;i<comps.length;i++){
-      const comp = comps[i];
-      const shift = newStarts[i] - comp.minX;
-      for (const p of comp.pixels){
-        const y = (p / w) | 0;
-        const x = p - y*w;
-        const nx = x + shift;
-        if (nx < 0 || nx >= w) continue;
-        const src = p*4, dst = (y*w + nx)*4;
-        out[dst]   = imgData.data[src];
-        out[dst+1] = imgData.data[src+1];
-        out[dst+2] = imgData.data[src+2];
-        out[dst+3] = imgData.data[src+3];
-      }
+    let minX = starts[0];
+    let maxX = starts[0] + (components[0].maxX - components[0].minX);
+    for (let i=1;i<components.length;i++){
+      const w = components[i].maxX - components[i].minX;
+      if (starts[i] < minX) minX = starts[i];
+      if (starts[i] + w > maxX) maxX = starts[i] + w;
     }
-
-    // recenter to original center
-    const packed = new ImageData(out, w, h);
-    const bb = bboxFromData(packed, w, h);
-    if (!bb || origCx == null) return packed;
-    const newCx = (bb.minX + bb.maxX)/2;
+    const newCx = (minX + maxX) / 2;
     const dx = origCx - newCx;
-    if (Math.abs(dx) < 0.5) return packed;
-
-    const shifted = new Uint8ClampedArray(w*h*4);
-    for (let y=0;y<h;y++){
-      for (let x=0;x<w;x++){
-        const nx = x + dx;
-        if (nx < 0 || nx >= w) continue;
-        const src = (y*w + x)*4;
-        const dst = (y*w + (nx|0))*4;
-        shifted[dst]   = packed.data[src];
-        shifted[dst+1] = packed.data[src+1];
-        shifted[dst+2] = packed.data[src+2];
-        shifted[dst+3] = packed.data[src+3];
-      }
-    }
-    return new ImageData(shifted, w, h);
-  }
-
-  function drawCompressedImage(img) {
-    // big buffer to avoid clipping while packing
-    const W = DW + PAD*2, H = DH + PAD*2;
-    const big = document.createElement('canvas');
-    big.width = W; big.height = H;
-    const g = big.getContext('2d');
-    g.clearRect(0,0,W,H);
-
-    // draw previous render 1:1 at center offset so that original area lands at DW/2,DH/2
-    const offX = PAD;
-    const offY = PAD;
-    g.drawImage(img, offX, offY, DW, DH);
-
-    const srcData = g.getImageData(0,0,W,H);
-    const origBB = bboxFromData(srcData, W, H);
-    const origCx = origBB ? (origBB.minX + origBB.maxX)/2 : W/2;
-
-    const packed = compress(srcData, W, H, spacingLevel, origCx);
-
-    // draw only the original DWxDH region back to main canvas
-    canvas.width = DW; canvas.height = DH;
-    ctx.clearRect(0,0,DW,DH);
-    setCounter(spacingLevel);
-    ctx.putImageData(packed, -offX, -offY);
-  }
-
-  function drawText(lines) {
-    canvas.width = DW; canvas.height = DH;
-    ctx.clearRect(0,0,DW,DH);
-    setCounter(spacingLevel);
-
-    const margin = DW * 0.08;
-    const availableH = DH - margin*2;
-    let fontSize = Math.floor(availableH / (lines.length * 1.6));
-    fontSize = Math.max(12, Math.min(fontSize, 180));
-
-    const lsEm = 1 - 0.8 * (spacingLevel / 100);
-    ctx.font = `900 ${fontSize}px "Press Start 2P", monospace`;
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#fff';
-
-    const lh = fontSize * 1.2;
-    const blockH = (lines.length - 1) * lh;
-    let y = DH/2 - blockH/2;
-
-    for (const line of lines) {
-      let width = 0;
-      for (const ch of line) width += ctx.measureText(ch).width + fontSize * lsEm;
-      width = Math.max(0, width - fontSize * lsEm);
-      let cursor = DW/2 - width/2;
-      for (const ch of line) {
-        ctx.fillText(ch, cursor, y);
-        cursor += ctx.measureText(ch).width + fontSize * lsEm;
-      }
-      y += lh;
-    }
+    for (let i=0;i<starts.length;i++) starts[i] += dx;
+    return starts;
   }
 
   function render() {
-    if (prevImg) drawCompressedImage(prevImg);
-    else drawText(fallbackLines);
+    canvas.width = DW; canvas.height = DH;
+    ctx.clearRect(0,0,DW,DH);
+    setCounter(spacingLevel);
+    if (!hasSource || !components.length) return;
+    const starts = computePositions(spacingLevel);
+    for (let i=0;i<components.length;i++) {
+      const comp = components[i];
+      const x = starts[i];
+      const y = comp.minY;
+      ctx.drawImage(comp.canvas, x, y);
+    }
   }
 
   function saveCurrent(){
@@ -227,17 +200,24 @@
     } catch(e){ diag('Save failed'); }
   }
 
+  function resetState(){
+    spacingLevel = 0;
+    render();
+  }
+
   function init(){
-    fallbackLines = loadLinesOnly();
+    const fallbackLines = loadLinesOnly();
     loadPrevImage().then(img=>{
-      if (img) { prevImg = img; diag('Loaded warped render; scroll to tighten.'); }
-      else { diag('No previous render; tightening text fallback.'); }
+      buildSourceAndComponents(img, fallbackLines);
       render();
+      diag(img ? 'Loaded warped render; scroll to tighten.' : 'No previous render; tightening text fallback.');
     });
 
     canvas.addEventListener('wheel',(e)=>{
       e.preventDefault();
-      spacingLevel = clamp(spacingLevel + e.deltaY * 0.05, 0, 100);
+      const delta = e.deltaY;
+      const step = Math.max(Math.abs(delta) * 0.05, 0.5);
+      spacingLevel = clamp(spacingLevel + (delta < 0 ? step : -step), 0, 100);
       render();
     }, {passive:false});
 
@@ -247,6 +227,18 @@
         saveCurrent();
         const target = nextLink.getAttribute('href') || 'page2.html';
         window.location.href = target;
+      });
+    }
+    if (resetBtn) {
+      resetBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        resetState();
+      });
+    }
+    if (startOverBtn) {
+      startOverBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'comment1.html';
       });
     }
   }

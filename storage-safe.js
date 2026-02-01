@@ -12,17 +12,17 @@
 
   if (ok) return;
 
-  const parseName = () => {
+  const parseWindowName = () => {
     try { return JSON.parse(window.name || '{}'); } catch (_) { return {}; }
   };
-  const store = parseName();
+  const store = parseWindowName();
   const sync = () => { try { window.name = JSON.stringify(store); } catch (_) {} };
 
   window.localStorage = {
-    getItem: (k) => Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null,
+    getItem: (k) => Object.prototype.hasOwnProperty.call(store, k) ? String(store[k]) : null,
     setItem: (k, v) => { store[k] = String(v); sync(); },
     removeItem: (k) => { delete store[k]; sync(); },
-    clear: () => { Object.keys(store).forEach((k) => delete store[k]); sync(); },
+    clear: () => { for (const k in store) delete store[k]; sync(); },
     key: (i) => Object.keys(store)[i] || null,
     get length() { return Object.keys(store).length; },
   };
